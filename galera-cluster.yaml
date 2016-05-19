@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: galera-cluster
+  labels:
+    app: galera
+spec:
+  ports:
+    - port: 3306
+      name: mysql
+    - port: 4444
+      name: state-snapshot-transfer
+    - port: 4567
+      name: replication-traffic
+    - port: 4568
+      name: incremental-state-transfer
+  selector:
+    app: galera
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: galera-cluster
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: galera
+        unit: galera-cluster
+    spec:
+      containers:
+      - name: galera-cluster
+        image: kenthsieh/mariadb-galera:1.9
+        ports:
+        - containerPort: 3306
+        - containerPort: 4444
+        - containerPort: 4567
+        - containerPort: 4568
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: P@55word
+          - name: DEBIAN_PASSWORD
+            value: 2cr1lmWSSJFL00a8
