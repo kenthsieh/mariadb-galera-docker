@@ -1,0 +1,29 @@
+[mysqld]
+binlog_format   = ROW
+default-storage-engine  = InnoDB
+innodb_autoinc_lock_mode = 2
+innodb_flush_log_at_trx_commit = 0
+query_cache_size = 0
+query_cache_type = 0
+
+# Galera Provider Configuration
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+#wsrep_provider_options="gcache.size=32G"
+
+# Galera Cluster Configuration
+wsrep_cluster_name="galera_cluster"
+wsrep_cluster_address=gcomm://
+
+# Galera Synchronization Congifuration
+wsrep_sst_method=rsync
+#wsrep_sst_auth=user:pass
+
+# Galera Node Configuration
+wsrep_node_address=127.0.0.1
+#wsrep_node_name="node1"
+
+# Galera support MyISAM replication
+#wsrep_replicate_myisam          = ON
+
+
+
