@@ -1,11 +1,17 @@
 #!/bin/bash
 
-# Set mysql password
-MYSQLPW="P@ssword"
 CLUSTER_FILE="/etc/mysql/conf.d/cluster.cnf"
 DEBIAN_FILE="/etc/mysql/debian.cnf"
-DEBIAN_NEW_PASSWORD="IvTYPh4yQzwu15VW"
-DEBIAN_PASSWORD=`awk '/password/{print $3}' $DEBIAN_FILE | tail -n 1`
+
+# Get debian-sys-maint password
+if [ -z "$DEBIAN_PASSWORD" ]; then
+  DEBIAN_PASSWORD="IvTYPh4yQzwu15VW"
+fi
+
+# Get mysql password
+if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+  MYSQL_ROOT_PASSWORD="P@ssword"
+fi
 
 # check mysql is started
 MYSQL=`ps ax | grep -c "/usr/sbin/mysqld"`
@@ -16,20 +22,17 @@ while [ $MYSQL -le 1 ]
   done
 
 # set mysql debian-sys-maint password
-if [ -n "$DEBIAN_NEW_PASSWORD" ]; then
-  mysqladmin -udebian-sys-maint -p$DEBIAN_PASSWORD password $DEBIAN_NEW_PASSWORD
-  sed -i -e "s|^password.*$|password = ${DEBIAN_NEW_PASSWORD}|" $DEBIAN_FILE
+if [ -n "$DEBIAN_PASSWORD" ]; then
+  mysql -uroot -e"UPDATE user SET Password=password('${DEBIAN_PASSWORD}') WHERE User='debian-sys-maint';" mysql
+  mysqladmin -uroot reload
+  sed -i -e "s|^password.*$|password = ${DEBIAN_PASSWORD}|" $DEBIAN_FILE
 fi
 
 # set mysql root password
 if [ -n "$MYSQL_ROOT_PASSWORD" ]; then
-  mysqladmin -uroot password $MYSQL_ROOT_PASSWORD
-  mysqladmin -uroot -p$MYSQL_ROOT_PASSWORD reload
-  mysqladmin -uroot -p$MYSQL_ROOT_PASSWORD refresh
-else
-  mysqladmin -uroot password $MYSQLPW
-  mysqladmin -uroot -p$MYSQLPW reload
-  mysqladmin -uroot -p$MYSQLPW refresh
+  mysql -uroot -e"UPDATE user SET Host='%' WHERE Host='::1';" mysql
+  mysql -uroot -e"UPDATE user SET Password=password('${MYSQL_ROOT_PASSWORD}') WHERE User='root';" mysql
+  mysqladmin -uroot reload
 fi
 
 # set nodes ip address
